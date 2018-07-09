@@ -521,7 +521,12 @@ void sinsp_threadinfo::set_env(const char* env, size_t len)
 		// this may fail for short-lived processes
 		if (set_env_from_proc())
 		{
+#ifdef _DEBUG
+			g_logger.format(sinsp_logger::SEV_DEBUG, "Large environment for process %lu [%s], loaded from /proc", m_pid, m_comm.c_str());
+#endif
 			return;
+		} else {
+			g_logger.format(sinsp_logger::SEV_INFO, "Failed to load environment for process %lu [%s] from /proc, using first %d bytes", m_pid, m_comm.c_str(), SCAP_MAX_ENV_SIZE);
 		}
 	}
 
