@@ -332,6 +332,7 @@ typedef struct scap_ifinfo_ipv4
 	uint32_t bcast; ///< Interface broadcast address
 	uint64_t linkspeed; ///< Interface link speed
 	char ifname[SCAP_MAX_PATH_SIZE]; ///< interface name (e.g. "eth0")
+	uint32_t foo;
 }scap_ifinfo_ipv4;
 
 /*!
@@ -360,6 +361,7 @@ typedef struct scap_ifinfo_ipv6
 	char bcast[SCAP_IPV6_ADDR_LEN]; ///< Interface broadcast address
 	uint64_t linkspeed; ///< Interface link speed
 	char ifname[SCAP_MAX_PATH_SIZE]; ///< interface name (e.g. "eth0")
+	uint32_t foo;
 }scap_ifinfo_ipv6;
 
 /*!

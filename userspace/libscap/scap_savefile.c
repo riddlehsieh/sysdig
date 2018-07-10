@@ -583,6 +583,7 @@ static int32_t scap_write_iflist(scap_t *handle, scap_dumper_t* d)
 	for(j = 0; j < handle->m_addrlist->n_v4_addrs; j++)
 	{
 		scap_ifinfo_ipv4 *entry = &(handle->m_addrlist->v4list[j]);
+		entry->foo = 1337;
 
 		entrylen = sizeof(scap_ifinfo_ipv4) + entry->ifnamelen - SCAP_MAX_PATH_SIZE;
 
@@ -593,7 +594,8 @@ static int32_t scap_write_iflist(scap_t *handle, scap_dumper_t* d)
 		   scap_dump_write(d, &(entry->netmask), sizeof(uint32_t)) != sizeof(uint32_t) ||
 		   scap_dump_write(d, &(entry->bcast), sizeof(uint32_t)) != sizeof(uint32_t) ||
 		   scap_dump_write(d, &(entry->linkspeed), sizeof(uint64_t)) != sizeof(uint64_t) ||
-		   scap_dump_write(d, &(entry->ifname), entry->ifnamelen) != entry->ifnamelen)
+		   scap_dump_write(d, &(entry->ifname), entry->ifnamelen) != entry->ifnamelen ||
+		   scap_dump_write(d, &(entry->foo), sizeof(uint32_t)) != sizeof(uint32_t))
 		{
 			snprintf(handle->m_lasterr, SCAP_LASTERR_SIZE, "error writing to file (IF2)");
 			return SCAP_FAILURE;
@@ -608,6 +610,7 @@ static int32_t scap_write_iflist(scap_t *handle, scap_dumper_t* d)
 	for(j = 0; j < handle->m_addrlist->n_v6_addrs; j++)
 	{
 		scap_ifinfo_ipv6 *entry = &(handle->m_addrlist->v6list[j]);
+		entry->foo = 1337;
 
 		entrylen = sizeof(scap_ifinfo_ipv6) + entry->ifnamelen - SCAP_MAX_PATH_SIZE;
 
@@ -618,7 +621,8 @@ static int32_t scap_write_iflist(scap_t *handle, scap_dumper_t* d)
 		   scap_dump_write(d, &(entry->netmask), SCAP_IPV6_ADDR_LEN) != SCAP_IPV6_ADDR_LEN ||
 		   scap_dump_write(d, &(entry->bcast), SCAP_IPV6_ADDR_LEN) != SCAP_IPV6_ADDR_LEN ||
 		   scap_dump_write(d, &(entry->linkspeed), sizeof(uint64_t)) != sizeof(uint64_t) ||
-		   scap_dump_write(d, &(entry->ifname), entry->ifnamelen) != entry->ifnamelen)
+		   scap_dump_write(d, &(entry->ifname), entry->ifnamelen) != entry->ifnamelen ||
+		   scap_dump_write(d, &(entry->foo), sizeof(uint32_t)) != sizeof(uint32_t))
 		{
 			snprintf(handle->m_lasterr, SCAP_LASTERR_SIZE, "error writing to file (IF2)");
 			return SCAP_FAILURE;
@@ -1832,11 +1836,11 @@ static int32_t scap_read_iflist(scap_t *handle, gzFile f, uint32_t block_length,
 
 			if(iftype == SCAP_II_IPV4)
 			{
-				entrysize = sizeof(scap_ifinfo_ipv4) + ifnamlen - SCAP_MAX_PATH_SIZE;
+				entrysize = sizeof(scap_ifinfo_ipv4) + ifnamlen - SCAP_MAX_PATH_SIZE - sizeof(uint32_t);
 			}
 			else if(iftype == SCAP_II_IPV6)
 			{
-				entrysize = sizeof(scap_ifinfo_ipv6) + ifnamlen - SCAP_MAX_PATH_SIZE;
+				entrysize = sizeof(scap_ifinfo_ipv6) + ifnamlen - SCAP_MAX_PATH_SIZE - sizeof(uint32_t);
 			}
 			else if(iftype == SCAP_II_IPV4_NOLINKSPEED)
 			{
@@ -2009,6 +2013,15 @@ static int32_t scap_read_iflist(scap_t *handle, gzFile f, uint32_t block_length,
 			// Make sure the name string is NULL-terminated
 			*((char *)(handle->m_addrlist->v4list + ifcnt4) + ifsize) = 0;
 
+			// Copy foo
+			if(entrysize && (ifsize + sizeof(uint32_t)) <= entrysize)
+			{
+			   memcpy(&handle->m_addrlist->v4list[ifcnt4].foo, pif + ifsize, sizeof(uint32_t));
+			   ifsize += sizeof(uint32_t);
+
+			   ASSERT(handle->m_addrlist->v4list[ifcnt4].foo == 1337);
+			}
+
 			ifcnt4++;
 		}
 		else if(iftype == SCAP_II_IPV4_NOLINKSPEED)
@@ -2066,6 +2079,15 @@ static int32_t scap_read_iflist(scap_t *handle, gzFile f, uint32_t block_length,
 
 			// Make sure the name string is NULL-terminated
 			*((char *)(handle->m_addrlist->v6list + ifcnt6) + ifsize) = 0;
+
+			// Copy foo
+			if(entrysize && (ifsize + sizeof(uint32_t)) <= entrysize)
+			{
+			   memcpy(&handle->m_addrlist->v6list[ifcnt6].foo, pif + ifsize, sizeof(uint32_t));
+			   ifsize += sizeof(uint32_t);
+
+			   ASSERT(handle->m_addrlist->v6list[ifcnt6].foo == 1337);
+			}
 
 			ifcnt6++;
 		}
